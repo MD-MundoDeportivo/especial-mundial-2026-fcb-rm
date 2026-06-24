@@ -339,7 +339,9 @@
     <p class="error" id="error" hidden></p>
   </main>
 
-  <script src="./data/mundial_2026_clubes.js"></script>
+  <!-- Los datos se leen del repositorio publico via CDN jsDelivr; el robot de
+       GitHub Actions los actualiza cada 15 min. No hace falta FTP ni copia local. -->
+  <script src="https://cdn.jsdelivr.net/gh/MD-MundoDeportivo/especial-mundial-2026-fcb-rm@main/data/mundial_2026_clubes.js"></script>
   <script>
     const CLUB_TITLES = {
       fc_barcelona: "Las cifras del Barça",

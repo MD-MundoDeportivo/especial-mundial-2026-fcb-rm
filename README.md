@@ -11,34 +11,24 @@ Este flujo consume los CSV publicados por `Bustami/efi-fifa-data-wc-2026` y gene
 - `data/mundial_2026_clubes.json`: salida alternativa en JSON.
 - `mundial_2026_preview.html`: vista HTML de comprobacion con celdas por jugador y totales. Carga el archivo JS.
 
-## Despliegue: GitHub Actions como robot que publica en el FTP
+## Despliegue: la web lee los datos del repositorio publico (sin FTP ni credenciales)
 
-La web NO se aloja en GitHub. El especial (HTML + carpeta `data/`) vive en el FTP de la empresa. GitHub solo actua de "robot" gratuito que cada 15 minutos regenera los datos y los sube a ese FTP. No hace falta tener ninguna maquina encendida.
+El codigo vive en el repositorio publico de GitHub (`MD-MundoDeportivo/especial-mundial-2026-fcb-rm`). GitHub Actions actua de "robot" gratuito que cada 15 minutos regenera los datos y los guarda en el repo. La web (donde quiera que este alojada: FTP, CMS, etc.) carga el JS directamente desde el CDN gratuito jsDelivr, que sirve los ficheros del repo. No hace falta ninguna maquina encendida, ningun FTP ni ninguna credencial.
 
 Flujo (`.github/workflows/actualizar-mundial-2026.yml`):
 
 1. `python3 actualizar_mundial_2026.py --compact` genera `data/mundial_2026_clubes.js` y `.json`.
-2. `python3 subir_ftp.py` los sube al FTP.
+2. Hace commit de esos ficheros en el repo.
+3. Refresca la cache del CDN jsDelivr para que la nueva version se sirva enseguida.
 
-Sondea cada 15 minutos en la franja de partidos (16:00-03:59 UTC) mas una pasada de seguridad a las 05:15 UTC. En la practica los datos aparecen en el FTP unos 15 minutos despues de que termine un partido de un jugador del FCB/RM y la fuente lo publique. Al sondear de forma continua, los retrasos, aplazamientos y prorrogas se cubren solos.
+Sondea cada 15 minutos en la franja de partidos (16:00-03:59 UTC) mas una pasada de seguridad a las 05:15 UTC. En la practica los datos quedan disponibles en el CDN unos 15 minutos despues de que termine un partido de un jugador del FCB/RM y la fuente lo publique. Al sondear de forma continua, los retrasos, aplazamientos y prorrogas se cubren solos.
 
 ### Puesta en marcha (una sola vez)
 
-1. Sube esta carpeta a un repositorio de GitHub (puede ser privado; solo es el robot, no la web).
-2. En el repo: `Settings > Secrets and variables > Actions > New repository secret`, crea:
-   - `FTP_HOST`: host del FTP.
-   - `FTP_USER`: usuario.
-   - `FTP_PASS`: contrasena.
-   - `FTP_DIR`: carpeta destino en el FTP, la misma donde el HTML busca `data/` (por ejemplo `/especiales/mundial-2026/data`).
-   - `FTP_TLS` (opcional): `1` para FTPS (recomendado) o `0` para FTP plano.
-   - `FTP_PORT` (opcional): por defecto 21.
-3. Sube al FTP, una sola vez, el `mundial_2026_preview.html` (o el HTML del CMS) y la carpeta `data/`. A partir de ahi el robot va sobrescribiendo solo los ficheros de `data/`.
-4. Comprueba que funciona lanzando el workflow a mano desde la pestana `Actions > Actualizar datos Mundial 2026 > Run workflow`.
-
-Para el CMS usa el archivo JS:
+En el HTML del especial, carga el JS desde el CDN del repositorio:
 
 ```html
-<script src="data/mundial_2026_clubes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/MD-MundoDeportivo/especial-mundial-2026-fcb-rm@main/data/mundial_2026_clubes.js"></script>
 ```
 
 La variable disponible sera:
@@ -46,6 +36,8 @@ La variable disponible sera:
 ```js
 MUNDIAL_2026_CLUBES
 ```
+
+Sube ese HTML a tu FTP/CMS como hagas siempre. Ya no necesitas subir la carpeta `data/` al FTP: el JS viene del CDN y se actualiza solo. Para comprobar que el robot funciona, lanza el workflow a mano desde `Actions > Actualizar datos Mundial 2026 > Run workflow`.
 
 ## Uso local opcional
 

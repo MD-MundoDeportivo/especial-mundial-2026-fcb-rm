@@ -4,19 +4,19 @@ No hace falta ejecutar el script a mano.
 
 ## Como se actualiza
 
-1. El repositorio del especial debe contener esta carpeta.
-2. GitHub Actions ejecuta `.github/workflows/actualizar-mundial-2026.yml` cada dia.
+1. El codigo vive en el repositorio publico de GitHub (`MD-MundoDeportivo/especial-mundial-2026-fcb-rm`).
+2. GitHub Actions ejecuta `.github/workflows/actualizar-mundial-2026.yml` cada 15 min en franja de partidos.
 3. La accion descarga los CSV actualizados de `Bustami/efi-fifa-data-wc-2026`.
-4. Regenera `data/mundial_2026_clubes.js`.
-5. Si hay cambios, hace commit automatico en el repo.
-6. El CMS solo tiene que cargar ese JS.
+4. Regenera `data/mundial_2026_clubes.js` y hace commit en el repo.
+5. Refresca la cache del CDN jsDelivr.
+6. El CMS lee ese JS directamente del CDN. No hace falta FTP ni copia local del JSON.
 
 ## Archivo para el CMS
 
-Usa este archivo:
+La web carga el JS directamente del repositorio publico via CDN jsDelivr (se actualiza solo):
 
 ```html
-<script src="data/mundial_2026_clubes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/MD-MundoDeportivo/especial-mundial-2026-fcb-rm@main/data/mundial_2026_clubes.js"></script>
 ```
 
 Dentro tendras:
