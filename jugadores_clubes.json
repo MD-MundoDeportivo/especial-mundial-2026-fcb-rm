@@ -1,0 +1,35 @@
+{
+  "fc_barcelona": {
+    "label": "FC Barcelona",
+    "players": [
+      { "id": "dani-olmo", "display_name": "Dani Olmo", "national_team": "ESP", "aliases": ["Dani OLMO"] },
+      { "id": "eric-garcia", "display_name": "Eric Garcia", "national_team": "ESP", "aliases": ["Eric GARCIA"] },
+      { "id": "ferran-torres", "display_name": "Ferran Torres", "national_team": "ESP", "aliases": ["Ferran TORRES"] },
+      { "id": "gavi", "display_name": "Gavi", "national_team": "ESP", "aliases": ["GAVI"] },
+      { "id": "joan-garcia", "display_name": "Joan Garcia", "national_team": "ESP", "aliases": ["Joan GARCIA"] },
+      { "id": "lamine-yamal", "display_name": "Lamine Yamal", "national_team": "ESP", "aliases": ["Lamine YAMAL"] },
+      { "id": "pau-cubarsi", "display_name": "Pau Cubarsi", "national_team": "ESP", "aliases": ["Pau CUBARSI"] },
+      { "id": "pedri", "display_name": "Pedri", "national_team": "ESP", "aliases": ["PEDRI"] },
+      { "id": "frenkie-de-jong", "display_name": "Frenkie de Jong", "national_team": "NED", "aliases": ["Frenkie DE JONG"] },
+      { "id": "joao-cancelo", "display_name": "Joao Cancelo", "national_team": "POR", "aliases": ["JOAO CANCELO"] },
+      { "id": "jules-kounde", "display_name": "Jules Kounde", "national_team": "FRA", "aliases": ["Jules KOUNDE"] },
+      { "id": "marcus-rashford", "display_name": "Marcus Rashford", "national_team": "ENG", "aliases": ["Marcus RASHFORD"] },
+      { "id": "raphinha", "display_name": "Raphinha", "national_team": "BRA", "aliases": ["RAPHINHA"] },
+      { "id": "ronald-araujo", "display_name": "Ronald Araujo", "national_team": "URU", "aliases": ["Ronald ARAUJO"] }
+    ]
+  },
+  "real_madrid": {
+    "label": "Real Madrid",
+    "players": [
+      { "id": "antonio-rudiger", "display_name": "Antonio Rudiger", "national_team": "GER", "aliases": ["Antonio RUEDIGER", "Antonio RUDIGER"] },
+      { "id": "arda-guler", "display_name": "Arda Guler", "national_team": "TUR", "aliases": ["Arda GULER"] },
+      { "id": "aurelien-tchouameni", "display_name": "Aurelien Tchouameni", "national_team": "FRA", "aliases": ["Aurelien TCHOUAMENI"] },
+      { "id": "brahim-diaz", "display_name": "Brahim Diaz", "national_team": "MAR", "aliases": ["Brahim DIAZ"] },
+      { "id": "federico-valverde", "display_name": "Federico Valverde", "national_team": "URU", "aliases": ["Federico VALVERDE"] },
+      { "id": "jude-bellingham", "display_name": "Jude Bellingham", "national_team": "ENG", "aliases": ["Jude BELLINGHAM"] },
+      { "id": "kylian-mbappe", "display_name": "Kylian Mbappe", "national_team": "FRA", "aliases": ["Kylian MBAPPE"] },
+      { "id": "thibaut-courtois", "display_name": "Thibaut Courtois", "national_team": "BEL", "aliases": ["Thibaut COURTOIS"] },
+      { "id": "vinicius-junior", "display_name": "Vinicius Junior", "national_team": "BRA", "aliases": ["VINICIUS JUNIOR"] }
+    ]
+  }
+}

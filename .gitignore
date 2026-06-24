@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+
+# Credenciales / entorno (nunca subir)
+.env
+*.env
+
+# Sistema
+.DS_Store
+Thumbs.db

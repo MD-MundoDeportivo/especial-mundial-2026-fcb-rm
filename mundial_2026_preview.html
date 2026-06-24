@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datos Mundial 2026 - FCB / Real Madrid</title>
+  <style>
+    :root {
+      --bg: #f4f1e9;
+      --ink: #101010;
+      --muted: #6d6a63;
+      --line: #d8d1c5;
+      --blue: #16468f;
+      --red: #d71920;
+      --soft-red: #e8c2c2;
+      --card: #fbfaf6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .wrap {
+      width: min(1480px, calc(100vw - 48px));
+      margin: 0 auto;
+      padding: 44px 0 56px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 42px;
+    }
+
+    .tab {
+      appearance: none;
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+      padding: 13px 22px;
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-size: clamp(18px, 2.2vw, 28px);
+      font-weight: 900;
+      letter-spacing: 8px;
+      margin: 0 0 18px;
+      text-transform: uppercase;
+    }
+
+    .hero {
+      align-items: end;
+      border-bottom: 2px solid var(--line);
+      display: grid;
+      gap: 28px;
+      grid-template-columns: minmax(320px, 1fr) minmax(340px, 560px);
+      padding-bottom: 28px;
+    }
+
+    h1 {
+      font-size: clamp(64px, 8vw, 126px);
+      letter-spacing: 0;
+      line-height: 0.92;
+      margin: 0;
+      max-width: 820px;
+    }
+
+    .hero-side {
+      display: grid;
+      gap: 16px;
+      justify-items: end;
+      padding-bottom: 4px;
+    }
+
+    .updated {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .bars-title {
+      color: var(--red);
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 22px;
+      text-align: right;
+    }
+
+    .bars {
+      align-items: end;
+      display: flex;
+      gap: 9px;
+      height: 104px;
+      justify-content: end;
+      width: min(420px, 100%);
+    }
+
+    .bar {
+      background: var(--soft-red);
+      border-radius: 3px 3px 0 0;
+      flex: 1 1 0;
+      min-width: 28px;
+    }
+
+    .bar.hot {
+      background: var(--red);
+    }
+
+    .totals {
+      border-bottom: 2px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(8, minmax(112px, 1fr));
+      margin-bottom: 28px;
+    }
+
+    .total-cell {
+      border-left: 2px solid var(--line);
+      min-height: 124px;
+      padding: 18px 16px 14px;
+    }
+
+    .total-cell:first-child {
+      border-left: 0;
+    }
+
+    .label {
+      color: #3d3a35;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .value {
+      font-size: clamp(42px, 4.6vw, 72px);
+      font-weight: 900;
+      line-height: 0.9;
+    }
+
+    .value.minutes {
+      color: var(--red);
+    }
+
+    .players {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .player-card {
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      gap: 14px;
+      min-height: 180px;
+      padding: 18px;
+    }
+
+    .player-head {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .flag {
+      display: inline-grid;
+      flex: 0 0 32px;
+      font-size: 25px;
+      height: 32px;
+      place-items: center;
+      width: 32px;
+    }
+
+    .name {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.05;
+      min-width: 0;
+    }
+
+    .team {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .stats {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .stat {
+      min-width: 0;
+    }
+
+    .stat .k {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .stat .v {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .stat .v.red {
+      color: var(--red);
+    }
+
+    .result-row {
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(4, 1fr);
+      padding-top: 12px;
+    }
+
+    .small-note,
+    .error {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+      margin-top: 24px;
+    }
+
+    .error {
+      color: var(--red);
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .wrap {
+        width: min(100vw - 28px, 720px);
+        padding-top: 28px;
+      }
+
+      .hero {
+        align-items: start;
+        grid-template-columns: 1fr;
+      }
+
+      .hero-side {
+        justify-items: start;
+      }
+
+      .updated,
+      .bars-title {
+        text-align: left;
+      }
+
+      .totals {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .total-cell {
+        border-left: 0;
+        border-top: 2px solid var(--line);
+      }
+
+      .total-cell:first-child,
+      .total-cell:nth-child(2) {
+        border-top: 0;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .eyebrow {
+        letter-spacing: 4px;
+      }
+
+      .totals,
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="tabs" aria-label="Vistas">
+      <button class="tab" type="button" data-view="fc_barcelona" aria-selected="true">FC Barcelona</button>
+      <button class="tab" type="button" data-view="real_madrid" aria-selected="false">Real Madrid</button>
+      <button class="tab" type="button" data-view="comparativa" aria-selected="false">Comparativa</button>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Comparativa Mundial 2026</p>
+        <h1 id="title">Las cifras del Barça</h1>
+      </div>
+      <aside class="hero-side">
+        <div>
+          <div class="bars-title">Minutos jugados en este Mundial</div>
+          <div class="bars" id="bars" aria-hidden="true"></div>
+        </div>
+        <div class="updated" id="updated"></div>
+      </aside>
+    </section>
+
+    <section class="totals" id="totals" aria-label="Totales"></section>
+    <section class="players" id="players" aria-label="Jugadores"></section>
+    <p class="small-note" id="note"></p>
+    <p class="error" id="error" hidden></p>
+  </main>
+
+  <script src="./data/mundial_2026_clubes.js"></script>
+  <script>
+    const CLUB_TITLES = {
+      fc_barcelona: "Las cifras del Barça",
+      real_madrid: "Las cifras del R. Madrid",
+      comparativa: "Comparativa FCB / RM"
+    };
+    const FLAGS = {
+      BEL: "🇧🇪",
+      BRA: "🇧🇷",
+      ENG: "🏴",
+      ESP: "🇪🇸",
+      FRA: "🇫🇷",
+      GER: "🇩🇪",
+      MAR: "🇲🇦",
+      NED: "🇳🇱",
+      POR: "🇵🇹",
+      TUR: "🇹🇷",
+      URU: "🇺🇾"
+    };
+    const TOTAL_FIELDS = [
+      ["matches_played", "Partidos"],
+      ["goals", "Goles"],
+      ["assists", "Asistencias"],
+      ["wins", "Victorias"],
+      ["draws", "Empates"],
+      ["losses", "Derrotas"],
+      ["minutes", "Minutos jugados"],
+      ["fixtures_pending", "Pendientes"]
+    ];
+
+    let payload = null;
+    let currentView = "fc_barcelona";
+
+    const formatNumber = (value) => new Intl.NumberFormat("es-ES").format(value || 0);
+
+    function sumTotals(clubs) {
+      return TOTAL_FIELDS.reduce((acc, [key]) => {
+        acc[key] = clubs.reduce((sum, club) => sum + (club.totals[key] || 0), 0);
+        return acc;
+      }, {});
+    }
+
+    function getViewData(view) {
+      if (view === "comparativa") {
+        const clubs = Object.values(payload.clubs);
+        return {
+          label: "Comparativa",
+          totals: sumTotals(clubs),
+          players: clubs.flatMap((club) => club.players.map((player) => ({
+            ...player,
+            club_label: club.label
+          })))
+        };
+      }
+      return payload.clubs[view];
+    }
+
+    function renderBars(players) {
+      const bars = document.getElementById("bars");
+      bars.innerHTML = "";
+      const sorted = [...players].sort((a, b) => b.minutes - a.minutes).slice(0, 8);
+      const max = Math.max(...sorted.map((player) => player.minutes), 1);
+
+      sorted.forEach((player, index) => {
+        const bar = document.createElement("div");
+        bar.className = index < 2 ? "bar hot" : "bar";
+        bar.style.height = `${Math.max(9, (player.minutes / max) * 96)}px`;
+        bar.title = `${player.display_name}: ${formatNumber(player.minutes)} minutos`;
+        bars.appendChild(bar);
+      });
+    }
+
+    function renderTotals(totals) {
+      const totalsEl = document.getElementById("totals");
+      totalsEl.innerHTML = "";
+      TOTAL_FIELDS.forEach(([key, label]) => {
+        const cell = document.createElement("article");
+        cell.className = "total-cell";
+        cell.innerHTML = `
+          <div class="label">${label}</div>
+          <div class="value ${key === "minutes" ? "minutes" : ""}">${formatNumber(totals[key])}</div>
+        `;
+        totalsEl.appendChild(cell);
+      });
+    }
+
+    function renderPlayers(players) {
+      const playersEl = document.getElementById("players");
+      playersEl.innerHTML = "";
+
+      players.forEach((player) => {
+        const flag = FLAGS[player.national_team] || "○";
+        const club = player.club_label ? `<div class="team">${player.club_label} · ${player.national_team}</div>` : `<div class="team">${player.national_team}</div>`;
+        const card = document.createElement("article");
+        card.className = "player-card";
+        card.innerHTML = `
+          <div class="player-head">
+            <span class="flag">${flag}</span>
+            <div>
+              <div class="name">${player.display_name}</div>
+              ${club}
+            </div>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="k">PJ</div><div class="v">${formatNumber(player.matches_played)}</div></div>
+            <div class="stat"><div class="k">Goles</div><div class="v">${formatNumber(player.goals)}</div></div>
+            <div class="stat"><div class="k">Asist.</div><div class="v">${formatNumber(player.assists)}</div></div>
+            <div class="stat"><div class="k">Min.</div><div class="v red">${formatNumber(player.minutes)}</div></div>
+          </div>
+          <div class="result-row">
+            <div class="stat"><div class="k">PG</div><div class="v">${formatNumber(player.wins)}</div></div>
+            <div class="stat"><div class="k">PE</div><div class="v">${formatNumber(player.draws)}</div></div>
+            <div class="stat"><div class="k">PP</div><div class="v">${formatNumber(player.losses)}</div></div>
+            <div class="stat"><div class="k">Pend.</div><div class="v">${formatNumber(player.fixtures_pending)}</div></div>
+          </div>
+        `;
+        playersEl.appendChild(card);
+      });
+    }
+
+    function render(view) {
+      currentView = view;
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.setAttribute("aria-selected", String(tab.dataset.view === view));
+      });
+
+      const data = getViewData(view);
+      const players = [...data.players].sort((a, b) => b.minutes - a.minutes);
+      document.getElementById("title").textContent = CLUB_TITLES[view];
+      renderBars(players);
+      renderTotals(data.totals);
+      renderPlayers(players);
+
+      const pending = payload.source.missing_results?.length || 0;
+      const pendingAppearances = data.totals.result_pending || 0;
+      const classified = (data.totals.wins || 0) + (data.totals.draws || 0) + (data.totals.losses || 0);
+      document.getElementById("note").textContent = pending || pendingAppearances
+        ? `Partidos jugados: ${formatNumber(data.totals.matches_played)} = ${formatNumber(classified)} con resultado + ${formatNumber(pendingAppearances)} sin resultado cargado. Partidos futuros pendientes: ${formatNumber(data.totals.fixtures_pending)}.`
+        : `Todos los partidos jugados tienen resultado de selección informado. Partidos futuros pendientes: ${formatNumber(data.totals.fixtures_pending)}.`;
+    }
+
+    function boot() {
+      try {
+        if (typeof MUNDIAL_2026_CLUBES === "undefined") {
+          throw new Error("Datos no cargados");
+        }
+        payload = MUNDIAL_2026_CLUBES;
+        const generatedAt = payload.source.generated_at
+          ? new Date(payload.source.generated_at).toLocaleString("es-ES")
+          : "";
+        document.getElementById("updated").textContent = generatedAt ? `Datos generados: ${generatedAt}` : "";
+        render(currentView);
+      } catch (error) {
+        const errorEl = document.getElementById("error");
+        errorEl.hidden = false;
+        errorEl.textContent = "No se ha podido cargar data/mundial_2026_clubes.js. Comprueba que el archivo JS esta junto al HTML en la carpeta data.";
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => render(tab.dataset.view));
+    });
+
+    boot();
+  </script>
+</body>
+</html>

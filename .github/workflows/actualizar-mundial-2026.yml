@@ -1,0 +1,45 @@
+name: Actualizar datos Mundial 2026
+
+on:
+  schedule:
+    # Sondeo cada 15 minutos en la franja en la que se disputan partidos del
+    # Mundial (16:00-03:59 UTC). El script regenera los datos y los sube al FTP.
+    # Como sondea de forma continua, los retrasos, aplazamientos y prorrogas se
+    # cubren solos: en cuanto la fuente publica el partido terminado, el
+    # siguiente sondeo (<=15 min despues) lo recoge en el FTP.
+    - cron: "*/15 16-23 * * *"
+    - cron: "*/15 0-3 * * *"
+    # Red de seguridad diaria por si la fuente publica fuera de la franja.
+    - cron: "15 5 * * *"
+  workflow_dispatch:
+
+# Evita que dos ejecuciones solapadas suban a la vez al FTP.
+concurrency:
+  group: actualizar-mundial-2026
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generar datos
+        run: python3 actualizar_mundial_2026.py --compact
+
+      - name: Subir datos al FTP de la empresa
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+          FTP_DIR: ${{ secrets.FTP_DIR }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_TLS: ${{ secrets.FTP_TLS }}
+        run: python3 subir_ftp.py
