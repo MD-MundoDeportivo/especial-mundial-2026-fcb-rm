@@ -124,6 +124,30 @@ def compute_results(efi_rows, match_rows):
     return results
 
 
+def compute_match_scores(efi_rows, match_rows):
+    """Devuelve el marcador {result_id: (goles_local, goles_visitante)} de cada
+    partido ya disputado, sumando los goles de los jugadores de cada equipo mas
+    los goles en propia del rival. Misma logica que compute_results."""
+    goals_by_team = {}
+    owngoals_by_team = {}
+    for row in efi_rows:
+        key = (row.get("match_id"), row.get("team_id"))
+        goals_by_team[key] = goals_by_team.get(key, 0) + to_int(row.get("goals"))
+        owngoals_by_team[key] = owngoals_by_team.get(key, 0) + to_int(row.get("own_goals"))
+
+    scores = {}
+    for match in match_rows:
+        match_id = match.get("result_id")
+        home_key = (match_id, match.get("home_team_id"))
+        away_key = (match_id, match.get("away_team_id"))
+        if home_key not in goals_by_team and away_key not in goals_by_team:
+            continue
+        home_score = goals_by_team.get(home_key, 0) + owngoals_by_team.get(away_key, 0)
+        away_score = goals_by_team.get(away_key, 0) + owngoals_by_team.get(home_key, 0)
+        scores[match_id] = (home_score, away_score)
+    return scores
+
+
 def to_int(value):
     if value in (None, "", "NA", "N/A"):
         return 0
@@ -148,7 +172,7 @@ def parse_date(value):
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def match_context(row, matches_by_result_id, results_by_match_team):
+def match_context(row, matches_by_result_id, results_by_match_team, scores_by_match):
     match = matches_by_result_id.get(row["match_id"], {})
     team_id = row.get("team_id")
     side = None
@@ -164,6 +188,7 @@ def match_context(row, matches_by_result_id, results_by_match_team):
 
     matches_played = to_int(row.get("matches_played"))
     result = results_by_match_team.get((row.get("match_id"), row.get("team_name")))
+    home_score, away_score = scores_by_match.get(row.get("match_id"), (None, None))
 
     return {
         "result_id": row.get("match_id"),
@@ -172,6 +197,8 @@ def match_context(row, matches_by_result_id, results_by_match_team):
         "stage": match.get("stage"),
         "home_team": match.get("home_team"),
         "away_team": match.get("away_team"),
+        "home_score": home_score,
+        "away_score": away_score,
         "side": side,
         "opponent": opponent,
         "team": row.get("team_name"),
@@ -200,6 +227,8 @@ def fixture_context(match, team_id):
         "stage": match.get("stage"),
         "home_team": match.get("home_team"),
         "away_team": match.get("away_team"),
+        "home_score": None,
+        "away_score": None,
         "side": side,
         "opponent": opponent,
     }
@@ -214,6 +243,7 @@ def build_payload(config, efi_rows, match_rows, results_by_match_team):
             team_id_by_code[row["team_name"]] = row["team_id"]
 
     matches_by_result_id = {row["result_id"]: row for row in match_rows}
+    scores_by_match = compute_match_scores(efi_rows, match_rows)
     generated_at = datetime.now(timezone.utc)
 
     payload = {
@@ -269,7 +299,7 @@ def build_payload(config, efi_rows, match_rows, results_by_match_team):
                     unique_rows.append(row)
 
             unique_rows.sort(key=lambda row: row.get("match_id", ""))
-            appearances = [match_context(row, matches_by_result_id, results_by_match_team) for row in unique_rows]
+            appearances = [match_context(row, matches_by_result_id, results_by_match_team, scores_by_match) for row in unique_rows]
             team_id = team_id_by_code.get(national_team)
             fixtures = []
             if team_id:

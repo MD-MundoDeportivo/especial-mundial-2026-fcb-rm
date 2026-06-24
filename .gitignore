@@ -9,3 +9,6 @@ __pycache__/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# El especial (HTML/CSS/JS/imagenes) se publica via CMS, no en este repo publico.
+comparativa-mundial-automatico-06JUN-24-v1/
