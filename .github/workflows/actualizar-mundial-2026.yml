@@ -58,22 +58,27 @@ jobs:
           repo="${GITHUB_REPOSITORY}"
           js="data/mundial_2026_clubes.js"
           json="data/mundial_2026_clubes.json"
-          # Una sola purga "a ciegas" no basta: si se dispara antes de que
-          # jsDelivr vea el commit nuevo, vuelve a cachear el dato VIEJO y se
-          # queda asi hasta 12 h (s-maxage del alias @main). Para evitar esa
-          # carrera, purgamos en bucle hasta confirmar que el CDN sirve
-          # EXACTAMENTE el "generated_at" que acabamos de generar.
           want=$(grep -o '"generated_at":"[^"]*"' "$js" | head -1)
-          echo "Esperando a que el CDN sirva: $want"
-          for i in $(seq 1 20); do
+          echo "Objetivo (generated_at recien generado): $want"
+          # Dos cuidados con la purga de jsDelivr:
+          #  1) CARRERA: si purgas inmediatamente, jsDelivr aun no ha visto el
+          #     commit nuevo y vuelve a cachear el VIEJO (atascado hasta 12 h).
+          #     -> esperamos antes de la primera purga.
+          #  2) LIMITE (throttle): si purgas muchas veces seguidas, jsDelivr
+          #     ignora las purgas ("throttled":true).
+          #     -> purgamos POCAS veces y BIEN ESPACIADO (no en bucle rapido).
+          ok=0
+          for i in 1 2 3; do
+            sleep 40
             curl -fsS "https://purge.jsdelivr.net/gh/${repo}@main/${js}"   >/dev/null || true
             curl -fsS "https://purge.jsdelivr.net/gh/${repo}@main/${json}" >/dev/null || true
+            sleep 5
             got=$(curl -fsS "https://cdn.jsdelivr.net/gh/${repo}@main/${js}" | grep -o '"generated_at":"[^"]*"' | head -1)
             echo "Intento $i: el CDN sirve $got"
-            if [ "$got" = "$want" ]; then
-              echo "CDN actualizado correctamente."
-              exit 0
-            fi
-            sleep 15
+            if [ "$got" = "$want" ]; then ok=1; break; fi
           done
-          echo "::warning::El CDN no confirmo la actualizacion tras 20 intentos; seguira propagandose por su cuenta."
+          if [ "$ok" = "1" ]; then
+            echo "CDN actualizado correctamente."
+          else
+            echo "::warning::El CDN no confirmo la actualizacion; se propagara por su cuenta (la web ya cache-bustea por su lado)."
+          fi
