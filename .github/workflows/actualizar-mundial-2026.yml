@@ -11,8 +11,14 @@ on:
     # siguiente sondeo (<=15 min despues) lo deja disponible en el CDN.
     - cron: "*/15 16-23 * * *"
     - cron: "*/15 0-3 * * *"
-    # Red de seguridad diaria por si la fuente publica fuera de la franja.
-    - cron: "15 5 * * *"
+    # La fuente de datos (Bustami) NO publica en vivo: vuelca su tanda diaria una
+    # sola vez al dia, normalmente entre las 07:30 y las 09:40 UTC. Antes solo
+    # habia una pasada de seguridad a las 05:15, que corria ANTES de esa tanda,
+    # asi que los partidos de noche se quedaban sin recoger hasta la franja de
+    # las 16:00. Ahora sondeamos cada 15 min de 04:00 a 11:59 UTC para recoger la
+    # tanda diaria en cuanto aparezca, con margen para los retrasos de los cron
+    # de GitHub Actions.
+    - cron: "*/15 4-11 * * *"
   workflow_dispatch:
 
 permissions:
