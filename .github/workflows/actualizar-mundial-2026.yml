@@ -52,9 +52,28 @@ jobs:
           commit_message: "Actualizar datos Mundial 2026"
           file_pattern: data/mundial_2026_clubes.json data/mundial_2026_clubes.js
 
-      - name: Refrescar la cache del CDN jsDelivr
+      - name: Refrescar la cache del CDN jsDelivr (con verificacion)
         if: steps.commit.outputs.changes_detected == 'true'
         run: |
-          base="https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main"
-          curl -fsS "${base}/data/mundial_2026_clubes.js" || true
-          curl -fsS "${base}/data/mundial_2026_clubes.json" || true
+          repo="${GITHUB_REPOSITORY}"
+          js="data/mundial_2026_clubes.js"
+          json="data/mundial_2026_clubes.json"
+          # Una sola purga "a ciegas" no basta: si se dispara antes de que
+          # jsDelivr vea el commit nuevo, vuelve a cachear el dato VIEJO y se
+          # queda asi hasta 12 h (s-maxage del alias @main). Para evitar esa
+          # carrera, purgamos en bucle hasta confirmar que el CDN sirve
+          # EXACTAMENTE el "generated_at" que acabamos de generar.
+          want=$(grep -o '"generated_at":"[^"]*"' "$js" | head -1)
+          echo "Esperando a que el CDN sirva: $want"
+          for i in $(seq 1 20); do
+            curl -fsS "https://purge.jsdelivr.net/gh/${repo}@main/${js}"   >/dev/null || true
+            curl -fsS "https://purge.jsdelivr.net/gh/${repo}@main/${json}" >/dev/null || true
+            got=$(curl -fsS "https://cdn.jsdelivr.net/gh/${repo}@main/${js}" | grep -o '"generated_at":"[^"]*"' | head -1)
+            echo "Intento $i: el CDN sirve $got"
+            if [ "$got" = "$want" ]; then
+              echo "CDN actualizado correctamente."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::warning::El CDN no confirmo la actualizacion tras 20 intentos; seguira propagandose por su cuenta."
