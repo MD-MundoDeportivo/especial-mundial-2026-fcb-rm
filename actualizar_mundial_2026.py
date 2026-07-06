@@ -77,6 +77,102 @@ def read_results(path):
     return results
 
 
+def enrich_matches_with_efi(match_rows, efi_rows):
+    """Completa los cruces eliminatorios, que en wc2026_matches.csv llegan con
+    'NA' en equipos: FIFA no publica el bracket en ese CSV, pero los dos equipos
+    de cada cruce ya jugado aparecen en las filas EFI de ese partido (match_id
+    de EFI == result_id del CSV de partidos). El nombre completo del equipo se
+    recupera de sus partidos de la fase de grupos, donde si viene informado.
+    Sin esto, todos los partidos de eliminatorias quedan sin resultado ni rival."""
+    name_by_team_id = {}
+    for match in match_rows:
+        for side in ("home", "away"):
+            team_id = match.get(f"{side}_team_id")
+            team_name = match.get(f"{side}_team")
+            if team_id and team_id != "NA" and team_name and team_name != "NA":
+                name_by_team_id[team_id] = team_name
+
+    team_ids_by_match = {}
+    code_by_team_id = {}
+    for row in efi_rows:
+        match_id = row.get("match_id")
+        team_id = row.get("team_id")
+        if not match_id or not team_id:
+            continue
+        ids = team_ids_by_match.setdefault(match_id, [])
+        if team_id not in ids:
+            ids.append(team_id)
+        if row.get("team_name"):
+            code_by_team_id[team_id] = row["team_name"]
+
+    for match in match_rows:
+        if match.get("home_team_id") not in ("", "NA", None):
+            continue
+        team_ids = team_ids_by_match.get(match.get("result_id"), [])
+        if len(team_ids) != 2:
+            continue
+        home_id, away_id = team_ids
+        match["home_team_id"] = home_id
+        match["away_team_id"] = away_id
+        match["home_team"] = name_by_team_id.get(home_id) or code_by_team_id.get(home_id, "NA")
+        match["away_team"] = name_by_team_id.get(away_id) or code_by_team_id.get(away_id, "NA")
+
+
+def compute_knockout_advance(efi_rows, match_rows):
+    """En eliminatorias con empate (se resolvieron en los penaltis) el dataset
+    no dice quien paso de ronda: se deduce mirando que equipo vuelve a aparecer
+    en un partido posterior. Devuelve {(result_id, codigo): True/False} solo
+    para los empates de eliminatoria ya deducibles."""
+    dates_by_team = {}
+    code_by_team_id = {}
+    matches_by_result_id = {row["result_id"]: row for row in match_rows}
+    for row in efi_rows:
+        team_id = row.get("team_id")
+        match = matches_by_result_id.get(row.get("match_id"))
+        match_date = parse_date((match or {}).get("date"))
+        if not team_id or not match_date:
+            continue
+        dates_by_team.setdefault(team_id, set()).add(match_date)
+        if row.get("team_name"):
+            code_by_team_id[team_id] = row["team_name"]
+
+    goals_by_team = {}
+    owngoals_by_team = {}
+    for row in efi_rows:
+        key = (row.get("match_id"), row.get("team_id"))
+        goals_by_team[key] = goals_by_team.get(key, 0) + to_int(row.get("goals"))
+        owngoals_by_team[key] = owngoals_by_team.get(key, 0) + to_int(row.get("own_goals"))
+
+    advance = {}
+    for match in match_rows:
+        if match.get("stage") == "First Stage":
+            continue
+        match_id = match.get("result_id")
+        home_id = match.get("home_team_id")
+        away_id = match.get("away_team_id")
+        home_key = (match_id, home_id)
+        away_key = (match_id, away_id)
+        if home_key not in goals_by_team and away_key not in goals_by_team:
+            continue
+        home_score = goals_by_team.get(home_key, 0) + owngoals_by_team.get(away_key, 0)
+        away_score = goals_by_team.get(away_key, 0) + owngoals_by_team.get(home_key, 0)
+        if home_score != away_score:
+            continue
+        match_date = parse_date(match.get("date"))
+        if not match_date:
+            continue
+        home_later = any(date > match_date for date in dates_by_team.get(home_id, ()))
+        away_later = any(date > match_date for date in dates_by_team.get(away_id, ()))
+        if home_later == away_later:
+            continue  # aun no deducible (o dato inconsistente)
+        for team_id, advanced in ((home_id, home_later), (away_id, away_later)):
+            code = code_by_team_id.get(team_id)
+            if code:
+                advance[(match_id, code)] = advanced
+
+    return advance
+
+
 def compute_results(efi_rows, match_rows):
     """Deduce victoria/empate/derrota de cada seleccion a partir de los goles del
     dataset EFI. El marcador de un equipo es la suma de goles de sus jugadores mas
@@ -172,7 +268,7 @@ def parse_date(value):
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def match_context(row, matches_by_result_id, results_by_match_team, scores_by_match):
+def match_context(row, matches_by_result_id, results_by_match_team, scores_by_match, advance_by_match_team=None):
     match = matches_by_result_id.get(row["match_id"], {})
     team_id = row.get("team_id")
     side = None
@@ -190,6 +286,18 @@ def match_context(row, matches_by_result_id, results_by_match_team, scores_by_ma
     result = results_by_match_team.get((row.get("match_id"), row.get("team_name")))
     home_score, away_score = scores_by_match.get(row.get("match_id"), (None, None))
 
+    # En eliminatorias, `advanced` dice si la seleccion paso de ronda: con
+    # victoria/derrota es directo; con empate (penaltis) se usa la deduccion
+    # de compute_knockout_advance. None = aun no se sabe.
+    advanced = None
+    if match.get("stage") and match.get("stage") != "First Stage":
+        if result == "win":
+            advanced = True
+        elif result == "loss":
+            advanced = False
+        else:
+            advanced = (advance_by_match_team or {}).get((row.get("match_id"), row.get("team_name")))
+
     return {
         "result_id": row.get("match_id"),
         "fifa_match_id": match.get("match_id"),
@@ -203,6 +311,7 @@ def match_context(row, matches_by_result_id, results_by_match_team, scores_by_ma
         "opponent": opponent,
         "team": row.get("team_name"),
         "result": result,
+        "advanced": advanced,
         "matches_played": matches_played,
         "goals": to_int(row.get("goals")),
         "assists": to_int(row.get("assists")),
@@ -234,7 +343,7 @@ def fixture_context(match, team_id):
     }
 
 
-def build_payload(config, efi_rows, match_rows, results_by_match_team):
+def build_payload(config, efi_rows, match_rows, results_by_match_team, advance_by_match_team=None):
     rows_by_player = {}
     team_id_by_code = {}
     for row in efi_rows:
@@ -256,6 +365,8 @@ def build_payload(config, efi_rows, match_rows, results_by_match_team):
                 "Club ownership comes from jugadores_clubes.json, not from the FIFA dataset.",
                 "time_played is rounded to minutes for the top-level minutes field.",
                 "wins/draws/losses come from resultados_selecciones.csv because wc2026_matches.csv does not include scores.",
+                "Knockout pairings arrive as NA in wc2026_matches.csv; teams are deduced from the EFI rows of each match.",
+                "Level knockout matches count as draws; `advanced` says who went through (deduced from later appearances).",
                 "fixtures_pending counts future scheduled national-team matches, not player appearances.",
             ],
         },
@@ -299,7 +410,7 @@ def build_payload(config, efi_rows, match_rows, results_by_match_team):
                     unique_rows.append(row)
 
             unique_rows.sort(key=lambda row: row.get("match_id", ""))
-            appearances = [match_context(row, matches_by_result_id, results_by_match_team, scores_by_match) for row in unique_rows]
+            appearances = [match_context(row, matches_by_result_id, results_by_match_team, scores_by_match, advance_by_match_team) for row in unique_rows]
             team_id = team_id_by_code.get(national_team)
             fixtures = []
             if team_id:
@@ -427,12 +538,16 @@ def main():
     config = json.loads(config_path.read_text(encoding="utf-8"))
     efi_rows = read_csv_url(EFI_URL)
     match_rows = read_csv_url(MATCHES_URL)
+    # Los cruces eliminatorios llegan con "NA": se completan desde el EFI antes
+    # de calcular nada, o todo el bracket quedaria pendiente.
+    enrich_matches_with_efi(match_rows, efi_rows)
     # El resultado se calcula automaticamente desde los goles del dataset.
     # resultados_selecciones.csv queda solo como override manual opcional.
     computed_results = compute_results(efi_rows, match_rows)
     manual_results = read_results(args.results)
     results_by_match_team = {**computed_results, **manual_results}
-    payload = build_payload(config, efi_rows, match_rows, results_by_match_team)
+    advance_by_match_team = compute_knockout_advance(efi_rows, match_rows)
+    payload = build_payload(config, efi_rows, match_rows, results_by_match_team, advance_by_match_team)
     payload["source"]["missing_results"] = collect_missing_results(payload)
 
     write_outputs(payload, output_path, js_path, args.compact)
